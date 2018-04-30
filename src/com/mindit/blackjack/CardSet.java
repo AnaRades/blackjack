@@ -26,9 +26,10 @@ public class CardSet extends ArrayList<Card> {
 	 * @return
 	 */
 	public Card takeCard() {
-		Random rand = new Random();
+		Random rand = new Random(System.currentTimeMillis());
 		int index = rand.nextInt(this.size());
 	
+		//either player will go bust long before we finish the cards in the set
 		return this.remove(index);
 	}
 	

@@ -1,8 +1,7 @@
 package com.mindit.blackjack;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.Scanner;
 
 public class Game implements GameConstants {
 
@@ -10,23 +9,30 @@ public class Game implements GameConstants {
 	private Player player;
 	private Player dealer;
 	
+	private static final Scanner sc = new Scanner(System.in);
+	
 	public static void main(String args[]) {
-		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		boolean keepPlaying = true;
+		
+		//initial {javaWhitespace}+ was not working correctly
+		sc.useDelimiter("\\s*");
+		
 		Game game;
 		while (keepPlaying) {
 			try {
 				game = new Game();
 				game.play();
-				System.out.println(PLAY_ANOTHER);
-				if (!"Y".equalsIgnoreCase(in.readLine())) {
+				print(PLAY_ANOTHER);
+				
+				if (!"Y".equalsIgnoreCase(sc.next().trim())) {
 					keepPlaying = false;
 				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
 		}
-		System.out.println(GOOD_DAY);
+		sc.close();
+		print(GOOD_DAY);
 	}
 	
 	public Game() {
@@ -36,10 +42,8 @@ public class Game implements GameConstants {
 	}
 	
 	public void play() throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        
 		//initial draw
-		System.out.println(INITIAL_DRAW);
+		print(INITIAL_DRAW);
 		//dealer gets 2 cards, display second one as hidden
 		dealer.takeTurn(cardSet);
 		//player receives 2 cards, display them both
@@ -51,76 +55,83 @@ public class Game implements GameConstants {
 			//check if dealer also has blackjack
 			if (dealer.isBlackJack()) {
 				//if yes, it's a draw
-				System.out.println(BJ_DRAW);
+				print(BJ_DRAW);
 			} else {
 				//otherwise Player wins
-				System.out.println(PLAYER_WINS_BJ);
+				print(PLAYER_WINS_BJ);
 			}
 			return;
 		}
 		
-		boolean isPlayerBust = false;
+		boolean isPlayerOut = false;
 		int wrongAnswer = 0;
 		String answer;
 		//prompt user to take other cards or stop
 		while(true) {
-			System.out.println("Do you want to draw another card? (Y/N)");
-			System.in.read();
-			answer = in.readLine();
+			print("Do you want to draw another card? (Y/N)");
+			answer = sc.next();
 			if("Y".equalsIgnoreCase(answer.trim())) {
 				player.takeTurn(cardSet);
 				if(player.getHandSize() == 21) {
 					System.out.println("BlackJack!");
 					break;
 				}
-				if(player.getHandSize() > 21) {
-					isPlayerBust = true;
+				if(player.isBust()) {
+					isPlayerOut = true;
 					break;
 				}
 			} else if("N".equalsIgnoreCase(answer.trim())) {
 				//end player, compute hand
 				break;
-			} 
-			if(wrongAnswer < 3) {
-				System.out.println("Do you want to draw another card? (Y/N)");
-				answer = in.readLine();
+			} else if(wrongAnswer < 3) {
 				wrongAnswer++;
-			} else {
-				System.out.println("Go home player, you're drunk!");
-				isPlayerBust = true;
+			} else if(wrongAnswer >= 3) {
+				print("Go home player, you're drunk!");
+				isPlayerOut = true;
 				break;
 			}
 		}
-		System.out.println("Player had a hand of " + player.getHandSize());
-		if(isPlayerBust) {
-			System.out.println("Player was bust, Dealer wins!");
+		print("Player had a hand of " + player.getHandSize());
+		if(isPlayerOut) {
+			print("Player is out, Dealer wins!");
 			return;
 		}
 		//show hidden card
 		dealer.showHiddenCard();
 	
 		if(dealer.getHandSize() >= 17) {
-			System.out.println("Dealer stops");
+			print("Dealer stops");
 		} else {
 			//following rules of the game dealer takes other cards
 			//while hand is below 17 take card
 			while(true) {
 				dealer.takeTurn(cardSet);
 				if(dealer.getHandSize() < 17) {
-					System.out.println("Dealer draws another");
+					print("Dealer draws another");
 				} else {
 					break;
 				}
 			}
-			System.out.println("dealer stops");
+			print("dealer stops");
 		}
+		if(dealer.isBust()) {
+			print("Dealer is bust, Player wins!");
+			return;
+		}
+		
 		//compare hands and declare winner
-		if(dealer.getHandSize() == player.getHandSize()) {
-			System.out.println("It's a draw!");
-		} else if(dealer.getHandSize() < player.getHandSize()) {
-			System.out.println("Player had a better hand, wins!");
+		int result = dealer.compareTo(player);
+		
+		if(result == 0) {
+			print("It's a draw!");
+		} else if(result < 0) {
+			print("Player had a better hand, wins!");
 		} else {
-			System.out.println("Dealer had a better hand, wins!");
+			print("Dealer had a better hand, wins!");
 		}
+	}
+	
+	private static void print(String txt) {
+		System.out.println(txt);
 	}
 }

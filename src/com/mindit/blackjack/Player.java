@@ -7,13 +7,14 @@ import java.util.List;
  * Class encapsulating player properties and game actions
  * 
  */
-public class Player {
+public class Player implements Comparable<Player>{
 
 	private int handSize;
 	private List<Card> hand;
 	private int turnCount = 1;
 	private boolean containsAce = false;
 	private boolean isDealer;
+	private boolean isBust;
 	
 	public Player() {
 		this.handSize = 0;
@@ -40,7 +41,7 @@ public class Player {
 		} else {
 			Card card= cardSet.takeCard(); 
 			drawCard(card);
-			System.out.println(getPrintPrefix()+ card + " current size = " + handSize);
+			System.out.println(getPrintPrefix()+ card + " current size = " + getHandSize());
 		}
 		turnCount++;
 	}
@@ -51,6 +52,9 @@ public class Player {
 			containsAce = true;
 		}
 		handSize += card.getValue();
+		if(getHandSize() > 21) {
+			isBust = true;
+		}
 	}
 	
 	/**
@@ -70,18 +74,18 @@ public class Player {
 	 * @return true if player has blackjack
 	 */
 	public boolean isBlackJack() {
-		if(handSize != 2) {
+		if(hand.size() != 2) {
 			return false;
 		}
-		//if neither card is an ACE, we don't have blackjack
-		if(!hand.get(0).isAceCard() && !hand.get(0).isTenValueCard()) {
-			return false;
-		}
-		//if neither card is a 10 point card, we don't have blackjack
-		if(!hand.get(1).isAceCard() && !hand.get(1).isTenValueCard()) {
-			return false;
-		}
-		return true;
+		return (getHandSize() == 21);
+	}
+	
+	/**
+	 * 
+	 * @return true if play hand is over 21
+	 */
+	public boolean isBust() {
+		return this.isBust;
 	}
 	
 	/**
@@ -92,7 +96,7 @@ public class Player {
 		
 		sb.append("Dealer Hidden Card Was: ");
 		sb.append(hand.get(1).toString());
-		sb.append(". Dealer hand is " + handSize);
+		sb.append(". Dealer hand is " + getHandSize());
 		
 		System.out.println(sb.toString());
 	}
@@ -129,5 +133,19 @@ public class Player {
 		sb.append(") : ");
 		
 		return sb.toString();
+	}
+	
+	@Override
+	public int compareTo(Player otherPlayer) {
+		if(otherPlayer.isBust) {
+			if(this.isBust) {
+				return 0;
+			}
+			return 1;
+		}
+		if(this.isBust) {
+			return -1;
+		}
+		return (this.getHandSize() - otherPlayer.getHandSize());
 	}
 }
